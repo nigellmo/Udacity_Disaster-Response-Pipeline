@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
+import plotly.graph_objs as go
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
@@ -43,28 +44,52 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+
+    
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
-    graphs = [
-        {
-            'data': [
-                Bar(
-                    x=genre_names,
-                    y=genre_counts
-                )
-            ],
 
-            'layout': {
-                'title': 'Distribution of Message Genres',
-                'yaxis': {
-                    'title': "Count"
-                },
-                'xaxis': {
-                    'title': "Genre"
-                }
-            }
-        }
-    ]
+    #bar plot for genres
+    data_1=[]
+    data_1.append( 
+        Bar(
+        x=genre_names,
+        y=genre_counts
+        ) 
+    )
+
+    layout_1 = dict(title = 'Distribution of Message Genres',
+        yaxis = dict(title = "Count"),
+        xaxis = dict(title ="Genre")
+    )
+
+    #Create data for 2nd visualization - count of group-item list
+    #data preparation
+    counter=[]
+    for col in df.columns[4:]:
+        temp = df[col].sum()
+        counter.append(temp)
+    df_count = pd.DataFrame(data=counter,index=df.columns[4:],columns=['counts'])
+    list_group_names = list(df.columns[4:])
+    
+    #bar plot for list_group
+    data_2=[]
+    data_2.append( 
+        Bar(
+        x=list_group_names,
+        y=(df_count['counts']).tolist()
+            
+        ) 
+    )
+
+    layout_2 = dict(title = 'Distribution of List Group Names',
+        yaxis = dict(title = "Count"),
+        xaxis = dict(title = dict(text="List Group Namess",standoff=20),tickangle=-90,tickfont = dict(size=10))
+    )
+    #https://plot.ly/javascript/axes/
+    graphs = []
+    graphs.append(dict(data=data_1, layout=layout_1))
+    graphs.append(dict(data=data_2, layout=layout_2))
     
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
